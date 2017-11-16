@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import pickle
+import json
 import re
 
 from sklearn.naive_bayes import MultinomialNB
@@ -10,6 +11,18 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import TruncatedSVD
 
 from utils import *
+
+def calcUnique(df):
+	## set unique
+	eap = [item for sublist in [word_tokenize(c) for c in df.clean_text[df.author=="EAP"]] for item in sublist]
+	hpl = [item for sublist in [word_tokenize(c) for c in df.clean_text[df.author=="HPL"]] for item in sublist]
+	mws = [item for sublist in [word_tokenize(c) for c in df.clean_text[df.author=="MWS"]] for item in sublist]
+
+	return [
+		list(set(findUnique(eap, set(hpl).union(set(mws))))),
+		list(set(findUnique(hpl, set(eap).union(set(mws))))),
+		list(set(findUnique(mws, set(hpl).union(set(eap)))))
+	]
 
 def main():
 	## import train.csv
@@ -33,7 +46,7 @@ def main():
 	## initialize tfidf vectorizer and transform data
 	print("Training MNB...")
 	tfidf_vectorizer = TfidfVectorizer(max_features=4000).fit(train_base.clean_text)
-	pickle.dump(tfidf_vectorizer, open("vectorizer.pickle", "wb"))
+	pickle.dump(tfidf_vectorizer, open("vectorizer.pkl", "wb"))
 
 	tfidf_base = tfidf_vectorizer.transform(train_base.clean_text)
 	tfidf_stack = tfidf_vectorizer.transform(train_stack.clean_text)
@@ -43,6 +56,7 @@ def main():
 
 	## train base classifiers
 	mnb = MultinomialNB(alpha=.1).fit(tfidf_base, y)
+	pickle.dump(mnb, open("mnb.pkl", "wb"))
 
 	"""
 	Step 2:
@@ -62,7 +76,9 @@ def main():
 	meta['char_count'] = characterCount(train_stack.clean_text)
 
 	## tag unique
-	meta = pd.concat([meta, tagUnique(train_stack)], axis=1)
+	uniq_tok = calcUnique(train_base)
+	json.dump(uniq_tok, open("uniq_tok.json", "w"))
+	meta = pd.concat([meta, tagUnique(train_stack.clean_text, uniq_tok)], axis=1)
 
 	## scale data
 	print("Scaling data...")
