@@ -44,23 +44,21 @@ def main():
 	Set parameter dictionaries
 	"""
 
-	print("Training KNN...")
-	knn = KNeighborsClassifier(n_neighbors=50).fit(X_train, y_train)
+	knn = KNeighborsClassifier(n_neighbors=30).fit(X_train, y_train)
 	print("Training set score: {:.3f}".format(knn.score(X_train, y_train)))
 	print("Test set score: {:.3f}".format(knn.score(X_test, y_test)))
 	print("KNN F1 Score: {:.3f}".format(f1_score(y_test, knn.predict(X_test), average='weighted')))
 	printConfusion(y_test, knn.predict(X_test))
 	pickle.dump(knn, open("knn.pkl", "wb"))
 
+
 	print("Training GBC...")
-	gbc = GradientBoostingClassifier(learning_rate=.1, max_depth=1, n_estimators=100).fit(X_train, y_train)
+	gbc = GradientBoostingClassifier(learning_rate=.7, max_depth=1, n_estimators=100).fit(X_train, y_train)
 	print("Training set score: {:.3f}".format(gbc.score(X_train, y_train)))
 	print("Test set score: {:.3f}".format(gbc.score(X_test, y_test)))
 	print("GBC F1 Score: {:.3f}".format(f1_score(y_test, gbc.predict(X_test), average='weighted')))
 	printConfusion(y_test, gbc.predict(X_test))
 	pickle.dump(gbc, open("gbc.pkl", "wb"))
-
-
 
 if __name__ in "__main__":
 	main()
